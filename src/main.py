@@ -3,6 +3,7 @@ import traceback
 
 from config import SLACK_URL
 from exchange_adapter import ExchangeAdapter
+from src.model.turtle_model import create_schema_and_tables
 from turtle_trader import TurtleTrader
 from src.utils.log import init_logging
 from slack_bot.notifications import SlackNotifier
@@ -19,8 +20,8 @@ def trade():
         exchange = ExchangeAdapter('binance')
         for i in tickers:
             exchange.market = f"{i}/USDT"
-            turtle = TurtleTrader(exchange, testing_file_path='tests/data/test_ohlc_long_exit_cond.csv')
-            turtle.decide_move()
+            trader = TurtleTrader(exchange)
+            trader.trade()
         return
 
     except Exception as e:
@@ -32,5 +33,5 @@ def trade():
 
 if __name__ == '__main__':
     init_logging()
+    create_schema_and_tables()
     trade()
-    # app.run(debug=app_config.DEBUG)

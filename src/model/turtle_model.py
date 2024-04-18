@@ -1,12 +1,17 @@
-from sqlalchemy import Column, Float, String, Boolean, BigInteger, JSON, Numeric, ARRAY
+from cd_data.database.adapters.postgresql import PostgresqlAdapter
+from sqlalchemy import Column, Float, String, Boolean, BigInteger, JSON, Numeric, ARRAY, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
-from src.model import database
+
+from src.model import trader_database
+
+SCHEMA = 'turtle_strategy'
 Base = declarative_base()
 
 
 class TurtleBase(Base):
     """Abstract DB model for all product tables"""
-    __table_args__ = {'schema': 'turtle_strategy'}
+    __table_args__ = {'schema': SCHEMA}
     __abstract__ = True
 
 
@@ -52,5 +57,18 @@ class Order(TurtleBase):
     pl_percent = Column(Float)
 
 
-if __name__ == '__main__':
+def create_schema_and_tables(database: PostgresqlAdapter = trader_database):
+    schema_creation_query = text(f"CREATE SCHEMA IF NOT EXISTS {SCHEMA}")
+    try:
+        with database.engine.connect() as conn:
+            conn.execute(schema_creation_query)
+            conn.commit()
+    except SQLAlchemyError as e:
+        print(f"Error creating schema: {e}")
+        return
+
     Base.metadata.create_all(database.engine)
+
+
+if __name__ == '__main__':
+    create_schema_and_tables()
