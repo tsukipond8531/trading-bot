@@ -28,7 +28,7 @@ RUN mkdir /app && chown python:python /app
 WORKDIR /app
 
 COPY --chown=python:python --from=builder /app/venv ./venv
-COPY --chown=python:python xquiz_app /app/src
+COPY --chown=python:python src /app/src
 #mkdir -p /app/data_pipe/data_temp && chown python:python /app/data_pipe/data_temp
 
 USER 999

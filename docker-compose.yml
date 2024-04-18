@@ -7,7 +7,7 @@ services:
         - PYPI_URL=${PYPI_URL}
     image: tenjnd/turtle-trader:latest
     env_file:
-      - ./trading-bot.env
+      - .env
     network_mode: "host"
     entrypoint: ["python"]
     command: ["src/main.py"]
