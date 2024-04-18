@@ -4,13 +4,13 @@ import traceback
 from config import SLACK_URL
 from exchange_adapter import ExchangeAdapter
 from turtle_trader import TurtleTrader
-from utils.log import init_logging
-from utils.slack_notifier import SlackNotifier
+from src.utils.log import init_logging
+from slack_bot.notifications import SlackNotifier
 
 _logger = logging.getLogger(__name__)
 _notifier = SlackNotifier(url=SLACK_URL, username='main')
 
-tickers = ['BTC', 'GMX', 'LTC']
+tickers = ['LTC']
 
 
 def trade():
@@ -19,7 +19,7 @@ def trade():
         exchange = ExchangeAdapter('binance')
         for i in tickers:
             exchange.market = f"{i}/USDT"
-            turtle = TurtleTrader(exchange) #, testing_file_path='tests/data/test_ohlc_long_exit_cond.csv')
+            turtle = TurtleTrader(exchange, testing_file_path='tests/data/test_ohlc_long_exit_cond.csv')
             turtle.decide_move()
         return
 

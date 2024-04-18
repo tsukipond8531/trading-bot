@@ -1,6 +1,6 @@
 from marshmallow import Schema, fields, post_load
 
-from model.turtle_model import Order
+from src.model.turtle_model import Order
 
 
 class OrderSchema(Schema):

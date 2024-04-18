@@ -7,8 +7,8 @@ from retrying import retry
 
 from config import SLACK_URL, LEVERAGE
 from exchange_factory import ExchangeFactory
-from utils.slack_notifier import SlackNotifier
-from utils.utils import round
+from slack_bot.notifications import SlackNotifier
+from src.utils.utils import round
 
 _notifier = SlackNotifier(url=SLACK_URL, username='Exchange adapter')
 _logger = logging.getLogger(__name__)

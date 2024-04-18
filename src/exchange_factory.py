@@ -5,7 +5,7 @@ import ccxt
 from retrying import retry
 
 from config import app_config, SLACK_URL
-from utils.slack_notifier import SlackNotifier
+from slack_bot.notifications import SlackNotifier
 
 _notifier = SlackNotifier(url=SLACK_URL, username='Exchange factory')
 _logger = logging.getLogger('main.sub')

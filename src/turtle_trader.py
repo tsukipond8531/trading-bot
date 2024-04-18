@@ -9,9 +9,9 @@ from retrying import retry
 from sqlalchemy.exc import OperationalError, TimeoutError
 
 from exchange_adapter import ExchangeAdapter
-from model import database
-from model.turtle_model import Order
-from schemas.turtle_schema import OrderSchema
+from src.model import database
+from src.model.turtle_model import Order
+from src.schemas.turtle_schema import OrderSchema
 
 _logger = logging.getLogger(__name__)
 
