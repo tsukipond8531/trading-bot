@@ -9,7 +9,7 @@ from retrying import retry
 from sqlalchemy.exc import OperationalError, TimeoutError
 
 from exchange_adapter import ExchangeAdapter
-from src.model import database
+from src.model import trader_database
 from src.model.turtle_model import Order
 from src.schemas.turtle_schema import OrderSchema
 
@@ -155,7 +155,7 @@ class TurtleTrader:
                  testing_file_path: bool = False
                  ):
         self._exchange = exchange
-        self._database = database if not db else db
+        self._database = trader_database if not db else db
 
         self.opened_positions = None
         self.last_opened_position: LastOpenedPosition = None
@@ -324,12 +324,12 @@ class TurtleTrader:
 
     def process_opened_position(self):
         _logger.info('Processing opened positions')
-        pyramid_atr = self.last_opened_position.get_atr_for_pyramid()
 
         curr_mar_cond = self.curr_market_conditions
         last_stop_loss = self.last_opened_position.stop_loss_price
 
         # set trigger price for pyramid trade
+        pyramid_atr = self.last_opened_position.get_atr_for_pyramid()
         long_pyramid_price = self.last_opened_position.price + pyramid_atr
         short_pyramid_price = self.last_opened_position.price - pyramid_atr
 
@@ -369,7 +369,7 @@ class TurtleTrader:
                 _logger.info('Staying in position '
                              '-> no condition for opened position is met')
 
-    def decide_move(self):
+    def trade(self):
         if self.opened_positions is None:
             curr_cond = self.curr_market_conditions
             # entry long
