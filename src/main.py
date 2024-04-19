@@ -23,9 +23,9 @@ def trade():
         return
 
     except Exception as e:
-        _logger.error(f"there was an error with flask app: {str(e)}\n"
+        _logger.error(f"there was an error with trading-bot: {str(e)}\n"
                       f"{traceback.format_exc(limit=3)}")
-        _notifier.error(f"there was an error with flask app: {str(e)}\n"
+        _notifier.error(f"there was an error with trading-bot: {str(e)}\n"
                         f"{traceback.format_exc(limit=3)}")
 
 
