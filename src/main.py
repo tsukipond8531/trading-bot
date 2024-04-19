@@ -1,11 +1,12 @@
 import logging
+import sys
 import traceback
 
+from jnd_utils.log import init_logging
 from slack_bot.notifications import SlackNotifier
 
 from config import SLACK_URL, TRADED_TICKERS
 from exchange_adapter import ExchangeAdapter
-from jnd_utils.log import init_logging
 from turtle_trader import TurtleTrader
 
 _logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ def trade():
                       f"{traceback.format_exc(limit=3)}")
         _notifier.error(f"there was an error with trading-bot: {str(e)}\n"
                         f"{traceback.format_exc(limit=3)}")
+        sys.exit(1)
 
 
 if __name__ == '__main__':
