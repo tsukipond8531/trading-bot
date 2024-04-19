@@ -285,10 +285,11 @@ class TurtleTrader:
         free_balance = self._exchange.free_balance
         total_balance = self._exchange.total_balance
 
-        actual_asset_allocation = self.opened_positions.cost.sum() / total_balance
-        if actual_asset_allocation > MAX_ONE_ASSET_RISK_ALLOCATION:
-            _logger.warning(f'This trade would excess max capital allocation into one asset')
-            return
+        if self.opened_positions is not None:
+            actual_asset_allocation = self.opened_positions.cost.sum() / total_balance
+            if actual_asset_allocation > MAX_ONE_ASSET_RISK_ALLOCATION:
+                _logger.warning(f'This trade would excess max capital allocation into one asset')
+                return
 
         # This is to ensure that the pyramid position is not larger than the last position
         # (checking the free balance at the time of the last position).
