@@ -1,11 +1,7 @@
 version: "3"
 services:
   trading-bot:
-    build:
-      context: .
-      args:
-        - PYPI_URL=${PYPI_URL}
-    image: tenjnd/turtle-trader:latest
+    image: tenjnd/trading-bot:latest
     env_file:
       - .env
     network_mode: "host"
