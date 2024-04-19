@@ -12,7 +12,7 @@ _logger = logging.getLogger(__name__)
 
 
 def retry_if_network_error(exception):
-    """Return True if we should retry (in this case when it's an IOError), False otherwise"""
+    """Return True if we should retry, False otherwise"""
     return isinstance(exception, ccxt.NetworkError)
 
 
