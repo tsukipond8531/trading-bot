@@ -4,10 +4,10 @@ import traceback
 import ccxt
 import pandas as pd
 from retrying import retry
+from slack_bot.notifications import SlackNotifier
 
 from config import SLACK_URL, LEVERAGE
 from exchange_factory import ExchangeFactory
-from slack_bot.notifications import SlackNotifier
 from src.utils.utils import round
 
 _notifier = SlackNotifier(url=SLACK_URL, username='Exchange adapter')
@@ -17,6 +17,10 @@ POSITIONS_MAPPING = {
     'long': 'buy',
     'short': 'sell'
 }
+
+
+class NotEnoughBalanceException(Exception):
+    """Balance is really low"""
 
 
 def retry_if_network_error(exception):
@@ -65,9 +69,14 @@ class ExchangeAdapter(ExchangeFactory):
     @retry(retry_on_exception=retry_if_network_error,
            stop_max_attempt_number=5,
            wait_exponential_multiplier=1500)
-    def fetch_balance(self):
+    def fetch_balance(self, min_balance=50):
         _logger.info(f"getting balance")
         balance = self._exchange.fetch_balance()
+
+        if balance < min_balance:
+            _logger.error(f"balance: {balance}$ is under minimal balance: {min_balance}$")
+            raise NotEnoughBalanceException
+
         self.balance = balance
         return balance
 
