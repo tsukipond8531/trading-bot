@@ -17,9 +17,10 @@ def trade():
         _logger.info(f"Starting trade")
         exchange = ExchangeAdapter('binance')
         for i in TRADED_TICKERS:
-            exchange.market = f"{i}/USDT"
-            trader = TurtleTrader(exchange)
-            trader.trade()
+            print(f"working on {i}")
+            # exchange.market = f"{i}/USDT"
+            # trader = TurtleTrader(exchange)
+            # trader.trade()
         return
 
     except Exception as e:
