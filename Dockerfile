@@ -1,8 +1,8 @@
 # build stage
 FROM python:3.10.0 as builder
 
-ARG PYPI_URL
-ENV PYPI_URL=${PYPI_URL}
+#ARG PYPI_URL
+#ENV PYPI_URL=${PYPI_URL}
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ ENV PYTHONUNBUFFERED 1
 COPY requirements.txt .
 
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir --extra-index-url $PYPI_URL -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install git+https://github.com/tenJnd/notifier.git@main
 RUN pip install git+https://github.com/tenJnd/utils.git@main
 RUN pip install git+https://github.com/tenJnd/database-tools.git@main
