@@ -1,24 +1,22 @@
 import logging
 import traceback
 
-from config import SLACK_URL
-from exchange_adapter import ExchangeAdapter
-from src.model.turtle_model import create_schema_and_tables
-from turtle_trader import TurtleTrader
-from src.utils.log import init_logging
 from slack_bot.notifications import SlackNotifier
+
+from config import SLACK_URL, TRADED_TICKERS
+from exchange_adapter import ExchangeAdapter
+from src.utils.log import init_logging
+from turtle_trader import TurtleTrader
 
 _logger = logging.getLogger(__name__)
 _notifier = SlackNotifier(url=SLACK_URL, username='main')
-
-tickers = ['LTC']
 
 
 def trade():
     try:
         _logger.info(f"Starting trade")
         exchange = ExchangeAdapter('binance')
-        for i in tickers:
+        for i in TRADED_TICKERS:
             exchange.market = f"{i}/USDT"
             trader = TurtleTrader(exchange)
             trader.trade()
@@ -33,5 +31,4 @@ def trade():
 
 if __name__ == '__main__':
     init_logging()
-    create_schema_and_tables()
     trade()
