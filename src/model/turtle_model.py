@@ -1,4 +1,4 @@
-from cd_data.database.adapters.postgresql import PostgresqlAdapter
+from database_tools.adapters.postgresql import PostgresqlAdapter
 from sqlalchemy import Column, Float, String, Boolean, BigInteger, JSON, Numeric, ARRAY, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base

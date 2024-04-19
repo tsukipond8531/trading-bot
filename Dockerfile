@@ -16,6 +16,12 @@ COPY requirements.txt .
 
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir --extra-index-url $PYPI_URL -r requirements.txt
+RUN pip install git+https://github.com/tenJnd/notifier.git@main
+RUN pip install git+https://github.com/tenJnd/utils.git@main
+RUN pip install git+https://github.com/tenJnd/database-tools.git@main
+
+
+
 
 
 # app stage

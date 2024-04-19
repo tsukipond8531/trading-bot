@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import pandas.io.sql as sqlio
-from cd_data.database.adapters.postgresql import PostgresqlAdapter
+from database_tools.adapters.postgresql import PostgresqlAdapter
 from retrying import retry
 from sqlalchemy.exc import OperationalError, TimeoutError
 

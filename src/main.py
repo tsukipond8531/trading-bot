@@ -5,7 +5,7 @@ from slack_bot.notifications import SlackNotifier
 
 from config import SLACK_URL, TRADED_TICKERS
 from exchange_adapter import ExchangeAdapter
-from src.utils.log import init_logging
+from jnd_utils.log import init_logging
 from turtle_trader import TurtleTrader
 
 _logger = logging.getLogger(__name__)
