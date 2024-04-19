@@ -8,27 +8,21 @@ from database_tools.adapters.postgresql import PostgresqlAdapter
 from retrying import retry
 from sqlalchemy.exc import OperationalError, TimeoutError
 
+from config import (TRADE_RISK_ALLOCATION,
+                    MAX_ONE_ASSET_RISK_ALLOCATION,
+                    STOP_LOSS_ATR_MULTIPL,
+                    ATR_PERIOD,
+                    TURTLE_ENTRY_DAYS,
+                    TURTLE_EXIT_DAYS,
+                    OHLC_HISTORY_W_BUFFER_DAYS,
+                    PYRAMIDING_LIMIT,
+                    AGGRESSIVE_PYRAMID_ATR_PRICE_RATIO_LIMIT)
 from exchange_adapter import ExchangeAdapter
 from src.model import trader_database
 from src.model.turtle_model import Order
 from src.schemas.turtle_schema import OrderSchema
 
 _logger = logging.getLogger(__name__)
-
-# risks
-TRADE_RISK_ALLOCATION = 0.01  # one trade risk capital allocation
-MAX_ONE_ASSET_RISK_ALLOCATION = 0.5  # maximum of capital in one asset traded
-STOP_LOSS_ATR_MULTIPL = 2  # multiplication of atr to determine stop-loss
-
-# timeframes
-ATR_PERIOD = 20  # 20 for slow, 50 for fast
-TURTLE_ENTRY_DAYS = 20  # 20 for fast, 50 for slow
-TURTLE_EXIT_DAYS = 10  # 10 for fast, 20 for slow
-OHLC_HISTORY_W_BUFFER_DAYS = 10 + TURTLE_ENTRY_DAYS  # fetch ohlc history with buffer
-
-# pyramiding
-PYRAMIDING_LIMIT = 4  # max pyramid trades (1 init, 3 pyramid)
-AGGRESSIVE_PYRAMID_ATR_PRICE_RATIO_LIMIT = 0.02  # atr/price ratio lower than n means less volatile market
 
 
 def retry_if_sqlalchemy_transient_error(exception):
