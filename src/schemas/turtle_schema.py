@@ -32,6 +32,8 @@ class OrderSchema(Schema):
     stop_loss_price = fields.Float(allow_none=True, data_key="stopLossPrice")
     info = fields.Dict()
 
+    agg_trade_id = fields.Str(missing=None)
+
     atr = fields.Float(missing=None)
     position_status = fields.Str(missing='opened')
     action = fields.Str(missing=None)

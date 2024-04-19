@@ -19,7 +19,6 @@ class Order(TurtleBase):
     __tablename__ = 'orders'
 
     id = Column(String, primary_key=True)
-    trade_id = Column(String)
     client_order_id = Column(String, index=True)
     timestamp = Column(BigInteger)
     datetime = Column(String)
@@ -46,6 +45,8 @@ class Order(TurtleBase):
     take_profit_price = Column(Float)
     stop_loss_price = Column(Float)
     info = Column(JSON)
+
+    agg_trade_id = Column(String)
 
     atr = Column(Numeric)
     position_status = Column(String)

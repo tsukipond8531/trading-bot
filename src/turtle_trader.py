@@ -1,4 +1,5 @@
 import logging
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -25,6 +26,10 @@ from src.schemas.turtle_schema import OrderSchema
 _logger = logging.getLogger(__name__)
 
 
+def generate_trade_id():
+    return str(uuid.uuid4().fields[-1])[:8]
+
+
 def retry_if_sqlalchemy_transient_error(exception):
     """Determine if the exception is a transient SQLAlchemy error."""
     return isinstance(exception, (OperationalError, TimeoutError))
@@ -33,6 +38,7 @@ def retry_if_sqlalchemy_transient_error(exception):
 @dataclass
 class LastOpenedPosition:
     id: str
+    agg_trade_id: str
     action: str
     price: float
     cost: float
@@ -180,6 +186,7 @@ class TurtleTrader:
             df = sqlio.read_sql(
                 session.query(
                     Order.id,
+                    Order.agg_trade_id,
                     Order.action,
                     Order.price,
                     Order.cost,
@@ -218,6 +225,11 @@ class TurtleTrader:
         order_object.free_balance = self._exchange.free_balance
         order_object.total_balance = self._exchange.total_balance
         order_object.position_status = position_status
+
+        if self.last_opened_position is None:
+            order_object.agg_trade_id = generate_trade_id()
+        else:
+            order_object.agg_trade_id = self.last_opened_position.agg_trade_id
 
         # stop loss atr
         atr2 = STOP_LOSS_ATR_MULTIPL * order_object.atr
