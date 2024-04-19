@@ -44,6 +44,7 @@ KUCOIN_CONFIG_PROD = {
 
 SLACK_URL = os.environ.get("SLACK_URL")
 APP_SETTINGS = os.environ.get("APP_SETTINGS", "DevConfig")
+TRADED_TICKERS = os.environ.get("TRADED_TICKERS", "BTC,ETH,SOL,DOGE").split(',')
 
 
 class Config:
