@@ -42,12 +42,7 @@ KUCOIN_CONFIG_PROD = {
     }
 }
 
-MARGIN_PERCENT = float(os.environ.get('MARGIN_PERCENT', 5))
-
 SLACK_URL = os.environ.get("SLACK_URL")
-
-ALERT_PASS = os.environ.get("ALERT_PASS")
-
 APP_SETTINGS = os.environ.get("APP_SETTINGS", "DevConfig")
 
 
