@@ -8,7 +8,7 @@ from config import app_config, SLACK_URL
 from slack_bot.notifications import SlackNotifier
 
 _notifier = SlackNotifier(url=SLACK_URL, username='Exchange factory')
-_logger = logging.getLogger('main.sub')
+_logger = logging.getLogger(__name__)
 
 
 def retry_if_network_error(exception):
