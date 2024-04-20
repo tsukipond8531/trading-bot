@@ -30,6 +30,10 @@ _logger = logging.getLogger(__name__)
 _notifier = SlackNotifier(SLACK_URL, __name__, __name__)
 
 
+class AssetAllocationOverRiskLimit(Exception):
+    """ Asset trades exceeds risk limit"""
+
+
 def generate_trade_id():
     return str(uuid.uuid4().fields[-1])[:8]
 
@@ -305,7 +309,7 @@ class TurtleTrader:
             actual_asset_allocation = self.opened_positions.cost.sum() / total_balance
             if actual_asset_allocation > MAX_ONE_ASSET_RISK_ALLOCATION:
                 _logger.warning(f'This trade would excess max capital allocation into one asset')
-                return  # TODO: raise
+                raise AssetAllocationOverRiskLimit
 
             return free_balance
         else:
