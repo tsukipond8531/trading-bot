@@ -72,13 +72,11 @@ class ExchangeAdapter(ExchangeFactory):
     def fetch_balance(self, min_balance=50):
         _logger.info(f"getting balance")
         balance = self._exchange.fetch_balance()
+        self.balance = balance
 
-        if balance < min_balance:
+        if self.free_balance < min_balance:
             _logger.error(f"balance: {balance}$ is under minimal balance: {min_balance}$")
             raise NotEnoughBalanceException
-
-        self.balance = balance
-        return balance
 
     @retry(retry_on_exception=retry_if_network_error,
            stop_max_attempt_number=5,
@@ -153,7 +151,7 @@ class ExchangeAdapter(ExchangeFactory):
                 params=self.params
             )
 
-            _notifier.info(f"order {str.upper(side)} with result:")
+            _notifier.info(f"order {str.upper(side)} | amount: {amount}")
             return order
 
         except (ccxt.NetworkError, ccxt.ExchangeError) as e:
@@ -201,7 +199,7 @@ class ExchangeAdapter(ExchangeFactory):
                 params=params
             )
 
-            _notifier.info(f"order CLOSE {str.upper(side)} with result:")
+            _notifier.info(f"order CLOSE {str.upper(side)}")
             return order
 
         except (ccxt.NetworkError, ccxt.ExchangeError) as e:
