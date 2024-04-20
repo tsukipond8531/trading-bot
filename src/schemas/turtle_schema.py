@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, post_load
+from marshmallow import Schema, fields, post_load, EXCLUDE
 
 from src.model.turtle_model import Order
 
@@ -43,6 +43,9 @@ class OrderSchema(Schema):
     total_balance = fields.Float(missing=None)
     pl = fields.Float(missing=None)
     pl_percent = fields.Float(missing=None)
+
+    class Meta:
+        unknown = EXCLUDE
 
     @post_load
     def make_order(self, data, **kwargs):
