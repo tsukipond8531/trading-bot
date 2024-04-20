@@ -7,6 +7,8 @@ import pandas as pd
 import pandas.io.sql as sqlio
 from database_tools.adapters.postgresql import PostgresqlAdapter
 from retrying import retry
+from slack_bot.notifications import SlackNotifier
+from sqlalchemy import func
 from sqlalchemy.exc import OperationalError, TimeoutError
 
 from config import (TRADE_RISK_ALLOCATION,
@@ -17,13 +19,15 @@ from config import (TRADE_RISK_ALLOCATION,
                     TURTLE_EXIT_DAYS,
                     OHLC_HISTORY_W_BUFFER_DAYS,
                     PYRAMIDING_LIMIT,
-                    AGGRESSIVE_PYRAMID_ATR_PRICE_RATIO_LIMIT)
+                    AGGRESSIVE_PYRAMID_ATR_PRICE_RATIO_LIMIT,
+                    SLACK_URL)
 from exchange_adapter import ExchangeAdapter
 from src.model import trader_database
 from src.model.turtle_model import Order
 from src.schemas.turtle_schema import OrderSchema
 
 _logger = logging.getLogger(__name__)
+_notifier = SlackNotifier(SLACK_URL, __name__, __name__)
 
 
 def generate_trade_id():
@@ -45,6 +49,10 @@ class LastOpenedPosition:
     stop_loss_price: float
     atr: float
     free_balance: float
+    pl: float
+
+    def is_long(self):
+        return self.action == 'long'
 
     def get_atr_price_ratio(self):
         return self.atr / self.price
@@ -174,9 +182,6 @@ class TurtleTrader:
             return self.opened_positions['id'].to_list()
         return None
 
-    def is_last_opened_position_long(self):
-        return self.last_opened_position.action == 'long'
-
     @retry(retry_on_exception=retry_if_sqlalchemy_transient_error,
            stop_max_attempt_number=5,
            wait_exponential_multiplier=2000)
@@ -192,7 +197,8 @@ class TurtleTrader:
                     Order.cost,
                     Order.stop_loss_price,
                     Order.atr,
-                    Order.free_balance
+                    Order.free_balance,
+                    Order.pl
                 ).filter(
                     Order.position_status == 'opened',
                     Order.symbol == self._exchange.market_futures
@@ -215,56 +221,34 @@ class TurtleTrader:
     @retry(retry_on_exception=retry_if_sqlalchemy_transient_error,
            stop_max_attempt_number=5,
            wait_exponential_multiplier=2000)
-    def save_order(self, order, action, position_status='opened'):
-        _logger.info('Saving order to db')
-        self._exchange.fetch_balance()
-
-        order_object = OrderSchema().load(order)
-        order_object.atr = self.curr_market_conditions.ATR
-        order_object.action = action
-        order_object.free_balance = self._exchange.free_balance
-        order_object.total_balance = self._exchange.total_balance
-        order_object.position_status = position_status
-
-        if self.last_opened_position is None:
-            order_object.agg_trade_id = generate_trade_id()
-        else:
-            order_object.agg_trade_id = self.last_opened_position.agg_trade_id
-
-        # stop loss atr
-        atr2 = STOP_LOSS_ATR_MULTIPL * order_object.atr
-
-        # save stop-loss price
-        if action == 'long':
-            order_object.stop_loss_price = self.curr_market_conditions.C - atr2
-        elif action == 'short':
-            order_object.stop_loss_price = self.curr_market_conditions.C + atr2
-        else:
-            order_object.closed_positions = self.opened_positions_ids
-            pl, pl_percent = self.calculate_pl(order_object)
-            order_object.pl = pl
-            order_object.pl_percent = pl_percent
-
+    def get_pl(self):
+        _logger.info('Getting positions summary')
         with self._database.get_session() as session:
-            session.add(order_object)
-            session.commit()
-        _logger.info('Order successfully saved')
+            # Query for the sum of P&L for opened positions with the specific symbol
+            asset_pl = session.query(
+                func.sum(Order.pl).label('filtered_total_pl')
+            ).filter(
+                Order.symbol == self._exchange.market_futures
+            ).scalar()
 
-    @retry(retry_on_exception=retry_if_sqlalchemy_transient_error,
-           stop_max_attempt_number=5,
-           wait_exponential_multiplier=2000)
-    def update_closed_orders(self):
-        _logger.info('Updating closed orders in db')
-        with self._database.get_session() as session:
-            session.query(Order).filter(Order.id.in_(self.opened_positions_ids)).update(
-                {"position_status": "closed"},
-                synchronize_session=False  # Use 'fetch' if objects are being used in the session
-            )
-            session.commit()
-        _logger.info('Closed orders successfully updated')
+            # Query for the sum of P&L for all positions
+            total_pl = session.query(
+                func.sum(Order.pl).label('total_pl')
+            ).scalar()
+
+            # If there are no records matching the filters, set the values to 0.0
+            asset_pl = 0.0 if asset_pl is None else float(asset_pl)
+            total_pl = 0.0 if total_pl is None else float(total_pl)
+
+        return asset_pl, total_pl
+
+    def log_total_pl(self):
+        asset_pl, total_pl = self.get_pl()
+        _logger.info(f'{self._exchange.market} P/L = {asset_pl} | Total P/L = {total_pl}')
+        _notifier.info(f'{self._exchange.market} P/L = {asset_pl} | Total P/L = {total_pl}')
 
     def calculate_pl(self, close_order: OrderSchema):
-        if self.is_last_opened_position_long():
+        if self.last_opened_position.is_long():
             total_cost = self.opened_positions.cost.sum()
             total_revenue = close_order.cost
         else:
@@ -292,42 +276,107 @@ class TurtleTrader:
         self.curr_market_conditions = CurrMarketConditions(**curr_market_con)
         self.curr_market_conditions.log_current_market_conditions()
 
-    def entry_position(self, action):
-        self._exchange.fetch_balance()
-        free_balance = self._exchange.free_balance
-        total_balance = self._exchange.total_balance
+    def create_agg_trade_id(self):
+        if self.last_opened_position is None:
+            return generate_trade_id()
+        else:
+            return self.last_opened_position.agg_trade_id
 
-        if self.opened_positions is not None:
-            actual_asset_allocation = self.opened_positions.cost.sum() / total_balance
-            if actual_asset_allocation > MAX_ONE_ASSET_RISK_ALLOCATION:
-                _logger.warning(f'This trade would excess max capital allocation into one asset')
-                return
+    def get_stop_loss_price(self, action, atr2):
+        # save stop-loss price
+        if action == 'long':  # long
+            return self.curr_market_conditions.C - atr2
+        elif action == 'short':  # short
+            return self.curr_market_conditions.C + atr2
+        else:
+            return
 
-        # This is to ensure that the pyramid position is not larger than the last position
-        # (checking the free balance at the time of the last position).
-        # In the case of trading several assets.
+    def recalc_limited_free_entry_balance(self, free_balance, total_balance):
         if self.last_opened_position:
+            # This is to ensure that the pyramid position is not larger than the last position
+            # (checking the free balance at the time of the last position).
+            # In the case of trading several assets.
             last_pos_free_balance = self.last_opened_position.free_balance
             if free_balance > last_pos_free_balance:
                 _logger.info('Balance is greater than last position free balance '
                              '-> setting balance to last open position free balance')
                 free_balance = last_pos_free_balance
 
+            actual_asset_allocation = self.opened_positions.cost.sum() / total_balance
+            if actual_asset_allocation > MAX_ONE_ASSET_RISK_ALLOCATION:
+                _logger.warning(f'This trade would excess max capital allocation into one asset')
+                return  # TODO: raise
+
+            return free_balance
+        else:
+            return free_balance
+
+    @retry(retry_on_exception=retry_if_sqlalchemy_transient_error,
+           stop_max_attempt_number=5,
+           wait_exponential_multiplier=2000)
+    def update_closed_orders(self):
+        _logger.info('Updating closed orders in db')
+        with self._database.get_session() as session:
+            session.query(Order).filter(Order.id.in_(self.opened_positions_ids)).update(
+                {"position_status": "closed"},
+                synchronize_session=False  # Use 'fetch' if objects are being used in the session
+            )
+            session.commit()
+        _logger.info('Closed orders successfully updated')
+
+    @retry(retry_on_exception=retry_if_sqlalchemy_transient_error,
+           stop_max_attempt_number=5,
+           wait_exponential_multiplier=2000)
+    def commit_order_to_db(self, order_object: OrderSchema):
+        with self._database.get_session() as session:
+            session.add(order_object)
+            session.commit()
+        _logger.info('Order successfully saved')
+
+    def save_order(self, order, action, position_status='opened'):
+        _logger.info('Saving order to db')
+        self._exchange.fetch_balance()
+
+        order_object = OrderSchema().load(order)
+        order_object.atr = self.curr_market_conditions.ATR
+        order_object.action = action
+        order_object.free_balance = self._exchange.free_balance
+        order_object.total_balance = self._exchange.total_balance
+        order_object.position_status = position_status
+        order_object.agg_trade_id = self.create_agg_trade_id()
+        # stop loss atr
+        atr2 = STOP_LOSS_ATR_MULTIPL * order_object.atr
+        order_object.stop_loss_price = self.get_stop_loss_price(action, atr2)
+
+        if action == 'close':
+            order_object.closed_positions = self.opened_positions_ids
+            order_object.pl, order_object.pl_percent = self.calculate_pl(order_object)
+
+        self.commit_order_to_db(order_object)
+
+    def entry_position(self, action):
+        self._exchange.fetch_balance()
+        free_balance = self._exchange.free_balance
+        total_balance = self._exchange.total_balance
+
+        free_balance = self.recalc_limited_free_entry_balance(free_balance, total_balance)
+
         trade_risk_cap = free_balance * TRADE_RISK_ALLOCATION
         amount = trade_risk_cap / (STOP_LOSS_ATR_MULTIPL * self.curr_market_conditions.ATR)
 
-        _logger.info(f'Creating {action} order.\n'
-                     f'Amount: {amount}')
+        _logger.info(f'Creating {action} order. Amount: {amount}')
         order = self._exchange.order(action, amount)
+
         if order:
-            self.save_order(order, action)
+            self.save_order(order, action, free_balance)
 
     def exit_position(self):
         action = 'close'
         order = self._exchange.order(action)
         if order:
-            self.save_order(order, action, 'closed')
+            self.save_order(order, action, position_status='closed')
             self.update_closed_orders()
+            self.log_total_pl()
 
     def process_opened_position(self):
         _logger.info('Processing opened positions')
@@ -343,7 +392,7 @@ class TurtleTrader:
         # check if number of pyramid trade is over limit
         pyramid_stop = self.n_of_opened_positions > PYRAMIDING_LIMIT
 
-        if self.is_last_opened_position_long():
+        if self.last_opened_position.is_long():
             # exit position
             if curr_mar_cond.Long_Exit:
                 _logger.info('Exiting long position/s')
