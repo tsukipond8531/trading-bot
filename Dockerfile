@@ -35,7 +35,7 @@ WORKDIR /app
 
 COPY --chown=python:python --from=builder /app/venv ./venv
 COPY --chown=python:python src /app/src
-#mkdir -p /app/data_pipe/data_temp && chown python:python /app/data_pipe/data_temp
+RUN mkdir -p /app/trading_data && chown python:python /app/trading_data
 
 USER 999
 

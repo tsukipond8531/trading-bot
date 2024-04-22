@@ -25,6 +25,7 @@ from exchange_adapter import ExchangeAdapter
 from src.model import trader_database
 from src.model.turtle_model import Order
 from src.schemas.turtle_schema import OrderSchema
+from src.utils.utils import save_json_to_file
 
 _logger = logging.getLogger(__name__)
 _notifier = SlackNotifier(SLACK_URL, __name__, __name__)
@@ -338,7 +339,13 @@ class TurtleTrader:
         _logger.info('Order successfully saved')
 
     def save_order(self, order, action, position_status='opened'):
-        _logger.info('Saving order to db')
+        _logger.info('Saving order to file and DB')
+        try:
+            save_json_to_file(order, f"order_{order['id']}")
+        except Exception as exc:
+            _logger.error(f"Cannot save json file, skipp. {exc}")
+            _notifier.error(f"Cannot save json file, skipp. {exc}")
+
         self._exchange.fetch_balance()
 
         order_object = OrderSchema().load(order)
@@ -348,7 +355,6 @@ class TurtleTrader:
         order_object.total_balance = self._exchange.total_balance
         order_object.position_status = position_status
         order_object.agg_trade_id = self.create_agg_trade_id()
-        # stop loss atr
         atr2 = STOP_LOSS_ATR_MULTIPL * order_object.atr
         order_object.stop_loss_price = self.get_stop_loss_price(action, atr2)
 

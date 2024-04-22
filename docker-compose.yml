@@ -5,5 +5,10 @@ services:
     env_file:
       - .env
     network_mode: "host"
+    volumes:
+      - trading-data-volume:/app/trading_data
     entrypoint: ["python"]
     command: ["src/main.py"]
+
+volumes:
+  trading-data-volume:
