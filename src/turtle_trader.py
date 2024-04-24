@@ -249,8 +249,14 @@ class TurtleTrader:
 
     def log_total_pl(self):
         asset_pl, total_pl = self.get_pl()
-        _logger.info(f'{self._exchange.market} P/L = {asset_pl} | Total P/L = {total_pl}')
-        _notifier.info(f'{self._exchange.market} P/L = {asset_pl} | Total P/L = {total_pl}')
+        _logger.info(f'\n==={self._exchange.market}===\n'
+                     f'P/L = {asset_pl}\n'
+                     f'Total P/L = {total_pl}\n'
+                     f'Total balance: {self._exchange.total_balance}')
+        _notifier.info(f'\n==={self._exchange.market}===\n'
+                       f'P/L = {asset_pl}\n'
+                       f'Total P/L = {total_pl}\n'
+                       f'Total balance: {self._exchange.total_balance}')
 
     def calculate_pl(self, close_order: OrderSchema):
         if self.last_opened_position.is_long():
