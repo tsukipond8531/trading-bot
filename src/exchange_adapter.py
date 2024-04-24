@@ -75,11 +75,10 @@ class ExchangeAdapter(ExchangeFactory):
            wait_exponential_multiplier=1500)
     def fetch_balance(self, min_balance=50):
         _logger.info(f"getting balance")
-        balance = self._exchange.fetch_balance()
-        self.balance = balance
+        self.balance = self._exchange.fetch_balance()
 
-        if self.free_balance < min_balance:
-            _logger.error(f"balance: {balance}$ is under minimal balance: {min_balance}$")
+        if self.free_balance and self.free_balance < min_balance:
+            _logger.error(f"balance: {self.free_balance}$ is under minimal balance: {min_balance}$")
             raise NotEnoughBalanceException
 
     @retry(retry_on_exception=retry_if_network_error,
