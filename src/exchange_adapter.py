@@ -8,7 +8,6 @@ from slack_bot.notifications import SlackNotifier
 
 from config import SLACK_URL, LEVERAGE
 from exchange_factory import ExchangeFactory
-from src.utils.utils import round
 
 _notifier = SlackNotifier(url=SLACK_URL, username='Exchange adapter')
 _logger = logging.getLogger(__name__)
@@ -43,13 +42,19 @@ class ExchangeAdapter(ExchangeFactory):
     def free_balance(self):
         if not self.balance:
             self.fetch_balance()
-        return round(self.balance['free'][self._collateral], 1)
+        if self.balance:
+            free = self.balance['free'][self._collateral]
+            return free
+        return 0
 
     @property
     def total_balance(self):
         if not self.balance:
             self.fetch_balance()
-        return round(self.balance['total'][self._collateral], 1)
+        if self.balance:
+            total = self.balance['total'][self._collateral]
+            return total
+        return 0
 
     @property
     def market(self) -> str:
@@ -77,9 +82,9 @@ class ExchangeAdapter(ExchangeFactory):
         _logger.info(f"getting balance")
         self.balance = self._exchange.fetch_balance()
 
-        if self.free_balance and self.free_balance < min_balance:
-            _logger.error(f"balance: {self.free_balance}$ is under minimal balance: {min_balance}$")
-            raise NotEnoughBalanceException
+        # if self.free_balance and self.free_balance < min_balance:
+        #     _logger.error(f"balance: {self.free_balance}$ is under minimal balance: {min_balance}$")
+        #     raise NotEnoughBalanceException
 
     @retry(retry_on_exception=retry_if_network_error,
            stop_max_attempt_number=5,
