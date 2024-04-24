@@ -321,21 +321,19 @@ class TurtleTrader:
            wait_exponential_multiplier=2000)
     def update_closed_orders(self):
         _logger.info('Updating closed orders in db')
-        with self._database.get_session() as session:
+        with self._database.session_manager() as session:
             session.query(Order).filter(Order.id.in_(self.opened_positions_ids)).update(
                 {"position_status": "closed"},
                 synchronize_session=False  # Use 'fetch' if objects are being used in the session
             )
-            session.commit()
         _logger.info('Closed orders successfully updated')
 
     @retry(retry_on_exception=retry_if_sqlalchemy_transient_error,
            stop_max_attempt_number=5,
            wait_exponential_multiplier=2000)
     def commit_order_to_db(self, order_object: OrderSchema):
-        with self._database.get_session() as session:
+        with self._database.session_manager() as session:
             session.add(order_object)
-            session.commit()
         _logger.info('Order successfully saved')
 
     def save_order(self, order, action, position_status='opened'):
