@@ -33,18 +33,22 @@ class ExchangeAdapter(ExchangeFactory):
 
     def __init__(self, exchange_id, market: str = None, collateral: str = 'USDT'):
         super().__init__(exchange_id)
-        self._market = market
         self._collateral = collateral
+        self._market = f"{market}/{collateral}"
         self.market_futures = f"{self._market}:{self._collateral}"
         self._open_position = None
         self.balance = None
 
     @property
     def free_balance(self):
+        if not self.balance:
+            self.fetch_balance()
         return round(self.balance['free'][self._collateral], 1)
 
     @property
     def total_balance(self):
+        if not self.balance:
+            self.fetch_balance()
         return round(self.balance['total'][self._collateral], 1)
 
     @property
@@ -54,7 +58,7 @@ class ExchangeAdapter(ExchangeFactory):
     @market.setter
     def market(self, name) -> None:
         _logger.info(f"Setting market to {name}")
-        self._market = name
+        self._market = f"{name}/{self._collateral}"
         self.market_futures = f"{self._market}:{self._collateral}"
 
     @retry(retry_on_exception=retry_if_network_error,
