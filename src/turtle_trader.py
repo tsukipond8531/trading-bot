@@ -376,7 +376,7 @@ class TurtleTrader:
         order = self._exchange.order(action, amount)
 
         if order:
-            self.save_order(order, action, free_balance)
+            self.save_order(order, action)
 
     def exit_position(self):
         action = 'close'
