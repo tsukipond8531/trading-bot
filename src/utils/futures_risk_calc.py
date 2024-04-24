@@ -1,7 +1,7 @@
 """ simple script for stop-loss calculation """
 
 
-def calculate_stop_loss_based_on_risk(position, capital, risk_percent, asset_price, leverage):
+def calculate_stop_loss_based_on_risk(position, capital, risk_percent, asset_price, leverage=1):
     risk_amount = capital * risk_percent
     leveraged_capital = capital * leverage
     price_move = (risk_amount / leveraged_capital) * asset_price
@@ -13,7 +13,7 @@ def calculate_stop_loss_based_on_risk(position, capital, risk_percent, asset_pri
 
     asset_amount = leveraged_capital / asset_price
     loss = leveraged_capital - (asset_amount * stop_loss_price)
-    assert round(loss, 1) == round(risk_amount, 1)
+    assert round(abs(loss), 1) == round(risk_amount, 1)
 
     print(f"============\n"
           f"Find stop-loss price if investing {capital} with leverage {leverage} "
@@ -29,7 +29,7 @@ def calculate_stop_loss_based_on_risk(position, capital, risk_percent, asset_pri
     return stop_loss_price
 
 
-def calculate_risk_based_on_stop_loss(position, capital, risk_percent, asset_price, move, leverage=1):
+def calculate_risk_based_on_stop_loss(position, capital, asset_price, move, risk_percent=0.01, leverage=1):
     leveraged_risk = leverage * risk_percent
 
     risk_amount = leveraged_risk * capital
@@ -42,7 +42,7 @@ def calculate_risk_based_on_stop_loss(position, capital, risk_percent, asset_pri
         stop_loss_price = asset_price + move
 
     check = inv - (stop_loss_price * asset_amount)
-    assert round(check, 1) == round(risk_amount, 1)
+    assert round(abs(check), 1) == round(risk_amount, 1)
 
     print(f"============\n"
           f"Find position size based on price move ({move} against the position), "
@@ -50,7 +50,8 @@ def calculate_risk_based_on_stop_loss(position, capital, risk_percent, asset_pri
           f"is multiplied be leverage!!\n"
           f"position {str.upper(position)} set up:\n"
           f"capital: {capital}\n"
-          f"leverage: {leverage}\n"
+          f"leverage: {leverage} | "
+          f"risk unit percent: {risk_percent}\n"
           f"percent risk of cap: {leveraged_risk * 100}%\n"
           f"risk amount: {risk_amount}\n"
           f"leverage entry: amount {asset_amount}, investment {inv}\n"
@@ -61,14 +62,15 @@ def calculate_risk_based_on_stop_loss(position, capital, risk_percent, asset_pri
 
 if __name__ == '__main__':
     calculate_stop_loss_based_on_risk(position='long',
-                                      capital=800,
-                                      risk_percent=0.01,
+                                      capital=300,
+                                      risk_percent=0.05,
                                       asset_price=66_000,
                                       leverage=5)
 
     calculate_risk_based_on_stop_loss(position='long',
-                                      capital=8400,
-                                      risk_percent=0.01,
+                                      capital=100,
                                       asset_price=66_600,
-                                      move=3300,
-                                      leverage=2)
+                                      move=6600,
+                                      risk_percent=0.01,
+                                      leverage=5  # percent of capital risk
+                                      )
