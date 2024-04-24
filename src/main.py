@@ -15,14 +15,14 @@ _notifier = SlackNotifier(url=SLACK_URL, username='main')
 
 def trade():
     try:
-        _logger.info(f"\n\n============== Starting trade ==============")
+        _logger.info(f"Initialising Turtle trader, tickers: {TRADED_TICKERS}")
         exchange = ExchangeAdapter('binance')
         for ticker in TRADED_TICKERS:
+            _logger.info(f"\n\n============== Starting trade ==============")
             _logger.info(f"working on {ticker}")
             exchange.market = f"{ticker}/USDT"
             trader = TurtleTrader(exchange)
             trader.trade()
-            _logger.info("============== Trade DONE ==============")
 
     except Exception as e:
         _logger.error(f"there was an error with trading-bot: {str(e)}\n"
