@@ -30,12 +30,12 @@ def log_pl(exchange, ticker):
 
 @cli.command(help='run Turtle trading bot')
 def trade():
+    _logger.info("\n============== STARTING TRADE SESSION ==============\n")
     try:
         _logger.info(f"Initialising Turtle trader, tickers: {TRADED_TICKERS}")
         exchange = ExchangeAdapter('binance')
         for ticker in TRADED_TICKERS:
-            _logger.info(f"\n\n============== Starting trade ==============")
-            _logger.info(f"working on {ticker}")
+            _logger.info(f"\n\n----------- Starting trade - {ticker} -----------")
             exchange.market = f"{ticker}"
             trader = TurtleTrader(exchange)
             trader.trade()
