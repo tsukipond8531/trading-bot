@@ -21,6 +21,7 @@ class ExchangeFactory:
     def __init__(self, exchange_id: str):
         self._exchange_id = exchange_id
         self._exchange = self._create_exchange_object()
+        self.markets = ...
 
     @retry(retry_on_exception=retry_if_network_error, stop_max_attempt_number=7, wait_fixed=10_000)
     def _create_exchange_object(self) -> ccxt.Exchange:
@@ -54,7 +55,7 @@ class ExchangeFactory:
     def load_exchange(self) -> ccxt.Exchange.__module__:
         _logger.info(f"loading markets")
         try:
-            self._exchange.load_markets()
+            self.markets = self._exchange.load_markets()
             _logger.info("markets loaded")
 
         except ccxt.NetworkError as e:
