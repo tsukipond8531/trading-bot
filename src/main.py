@@ -34,6 +34,8 @@ def trade():
     try:
         _logger.info(f"Initialising Turtle trader, tickers: {TRADED_TICKERS}")
         exchange = ExchangeAdapter('binance')
+        exchange.load_exchange()
+
         for ticker in TRADED_TICKERS:
             _logger.info(f"\n\n----------- Starting trade - {ticker} -----------")
             exchange.market = f"{ticker}"
