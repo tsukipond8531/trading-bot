@@ -39,6 +39,14 @@ class ExchangeAdapter(ExchangeFactory):
         self.balance = None
 
     @property
+    def market_info(self):
+        return self.markets[self._market]
+
+    @property
+    def amount_precision(self):
+        return self.market_info['precision']['amount']
+
+    @property
     def free_balance(self):
         if not self.balance:
             self.fetch_balance()
