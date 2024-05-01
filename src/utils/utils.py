@@ -33,3 +33,10 @@ def save_json_to_file(json_data, file_name):
     out_file = os.path.join(TRADING_DATA_DIR, f'{file_name}.json')
     with open(out_file, "w") as ff:
         ff.write(json.dumps(json_data, indent=4, ensure_ascii=False))
+
+
+def get_adjusted_amount(amount, precision):
+    if precision == 0:
+        return max(1, round(amount))
+    else:
+        return round(amount, precision)

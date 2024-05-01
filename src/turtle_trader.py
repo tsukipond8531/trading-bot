@@ -25,7 +25,7 @@ from exchange_adapter import ExchangeAdapter
 from src.model import trader_database
 from src.model.turtle_model import Order
 from src.schemas.turtle_schema import OrderSchema
-from src.utils.utils import save_json_to_file, significant_round
+from src.utils.utils import save_json_to_file, get_adjusted_amount
 
 _logger = logging.getLogger(__name__)
 _notifier = SlackNotifier(SLACK_URL, __name__, __name__)
@@ -377,7 +377,7 @@ class TurtleTrader:
 
         trade_risk_cap = free_balance * TRADE_RISK_ALLOCATION
         amount = trade_risk_cap / (STOP_LOSS_ATR_MULTIPL * self.curr_market_conditions.ATR)
-        amount = significant_round(amount, 3)
+        amount = get_adjusted_amount(amount, self._exchange.amount_precision)
 
         _logger.info(f'Creating {action} order. Amount: {amount}')
         order = self._exchange.order(action, amount)
