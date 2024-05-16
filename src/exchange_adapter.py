@@ -38,8 +38,20 @@ class ExchangeAdapter(ExchangeFactory):
         self._open_position = None
         self.balance = None
 
+    def load_exchange(self):
+        _logger.info(f"loading markets")
+        try:
+            self.markets = self._exchange.load_markets(True)  # Force reload to ensure fresh data
+            _logger.info("Markets loaded successfully")
+            _logger.debug(f"Loaded market details: {self.markets}")  # Log all market details for verification
+        except Exception as e:
+            _logger.error(f"Failed to load markets: {e}, traceback: {traceback.format_exc()}")
+            raise e
+
     @property
     def market_info(self):
+        _logger.debug(f"Accessing market info for {self._market}: "
+                      f"{self.markets.get(self._market, 'Market not found')}")
         return self.markets[self._market]
 
     @property
