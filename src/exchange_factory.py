@@ -18,8 +18,9 @@ def retry_if_network_error(exception):
 
 class ExchangeFactory:
 
-    def __init__(self, exchange_id: str):
+    def __init__(self, exchange_id: str, use_futures: bool = True):
         self._exchange_id = exchange_id
+        self._use_futures = use_futures
         self._exchange = self._create_exchange_object()
         self.markets = ...
 
@@ -29,6 +30,10 @@ class ExchangeFactory:
             _logger.info(f"crating exchange object")
             _exchange_class = getattr(ccxt, self._exchange_id)
             _exchange = _exchange_class(app_config.EXCHANGES[self._exchange_id])
+            if self._use_futures:
+                _exchange.options['defaultType'] = 'future'  # Set exchange to use futures
+                _logger.info("Configured for futures trading")
+
             if app_config.USE_SANDBOX:
                 _logger.info(f"using SANDBOX")
                 _exchange.set_sandbox_mode(True)
@@ -52,27 +57,27 @@ class ExchangeFactory:
             _logger.error(msg)
             _notifier.error(msg)
 
-    def load_exchange(self) -> ccxt.Exchange.__module__:
-        _logger.info(f"loading markets")
-        try:
-            self.markets = self._exchange.load_markets()
-            _logger.info("markets loaded")
-
-        except ccxt.NetworkError as e:
-            msg = f"""{self._exchange.id} loading markets 
-                    failed due to a network error: {e}"""
-            _logger.error(msg)
-            _notifier.error(msg)
-
-        except ccxt.ExchangeError as e:
-            msg = f"""{self._exchange.id} loading markets 
-                    failed due to a exchange error: {e}"""
-            _logger.error(msg)
-            _notifier.error(msg)
-
-        except Exception as e:
-            msg = f"""{self._exchange.id} loading markets 
-                  failed with: {traceback.format_exc()}"""
-            _logger.error(msg)
-            _notifier.error(msg)
-        return self._exchange
+    # def load_exchange(self) -> ccxt.Exchange.__module__:
+    #     _logger.info(f"loading markets")
+    #     try:
+    #         self.markets = self._exchange.load_markets(True)
+    #         _logger.info("markets loaded")
+    #
+    #     except ccxt.NetworkError as e:
+    #         msg = f"""{self._exchange.id} loading markets
+    #                 failed due to a network error: {e}"""
+    #         _logger.error(msg)
+    #         _notifier.error(msg)
+    #
+    #     except ccxt.ExchangeError as e:
+    #         msg = f"""{self._exchange.id} loading markets
+    #                 failed due to a exchange error: {e}"""
+    #         _logger.error(msg)
+    #         _notifier.error(msg)
+    #
+    #     except Exception as e:
+    #         msg = f"""{self._exchange.id} loading markets
+    #               failed with: {traceback.format_exc()}"""
+    #         _logger.error(msg)
+    #         _notifier.error(msg)
+    #     return self._exchange
