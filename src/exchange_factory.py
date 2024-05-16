@@ -3,9 +3,9 @@ import traceback
 
 import ccxt
 from retrying import retry
+from slack_bot.notifications import SlackNotifier
 
 from config import app_config, SLACK_URL
-from slack_bot.notifications import SlackNotifier
 
 _notifier = SlackNotifier(url=SLACK_URL, username='Exchange factory')
 _logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ def retry_if_network_error(exception):
 
 class ExchangeFactory:
 
-    def __init__(self, exchange_id: str, use_futures: bool = True):
+    def __init__(self, exchange_id: str, use_futures: bool = False):
         self._exchange_id = exchange_id
         self._use_futures = use_futures
         self._exchange = self._create_exchange_object()
@@ -30,8 +30,11 @@ class ExchangeFactory:
             _logger.info(f"crating exchange object")
             _exchange_class = getattr(ccxt, self._exchange_id)
             _exchange = _exchange_class(app_config.EXCHANGES[self._exchange_id])
+
             if self._use_futures:
-                _exchange.options['defaultType'] = 'future'  # Set exchange to use futures
+                # Set exchange to use futures
+                # (on binance perp swaps are not the 'future'
+                _exchange.options['defaultType'] = 'future'
                 _logger.info("Configured for futures trading")
 
             if app_config.USE_SANDBOX:
