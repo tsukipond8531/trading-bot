@@ -52,7 +52,7 @@ TRADED_TICKERS = os.environ.get("TRADED_TICKERS", "BTC,ETH,SOL,DOGE").split(',')
 
 # turtle strategy
 # risks
-TRADE_RISK_ALLOCATION = os.environ.get('TRADE_RISK_ALLOCATION', 0.01)  # one trade risk capital allocation
+TRADE_RISK_ALLOCATION = os.environ.get('TRADE_RISK_ALLOCATION', 0.02)  # one trade risk capital allocation
 MAX_ONE_ASSET_RISK_ALLOCATION = os.environ.get(
     'MAX_ONE_ASSET_RISK_ALLOCATION',
     0.5
