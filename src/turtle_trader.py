@@ -377,9 +377,11 @@ class TurtleTrader:
 
         trade_risk_cap = free_balance * TRADE_RISK_ALLOCATION
         amount = trade_risk_cap / (STOP_LOSS_ATR_MULTIPL * self.curr_market_conditions.ATR)
+        _logger.info(f"Amount before rounding: {amount}")
         amount = get_adjusted_amount(amount, self._exchange.amount_precision)
 
-        _logger.info(f'Creating {action} order. Amount: {amount}')
+        _logger.info(f'Creating {action} order. '
+                     f'Adjusted Amount with Precision {self._exchange.amount_precision}: {amount}')
         order = self._exchange.order(action, amount)
 
         if order:
