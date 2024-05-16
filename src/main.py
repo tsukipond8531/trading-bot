@@ -35,18 +35,15 @@ def trade():
         _logger.info(f"Initialising Turtle trader, tickers: {TRADED_TICKERS}")
         exchange = ExchangeAdapter('binance')
         exchange.load_exchange()
-
         for ticker in TRADED_TICKERS:
             _logger.info(f"\n\n----------- Starting trade - {ticker} -----------")
             exchange.market = f"{ticker}"
             trader = TurtleTrader(exchange)
+            _logger.info(f"Market info before trading: {exchange.market_info}")
             trader.trade()
-
     except Exception as e:
-        _logger.error(f"there was an error with trading-bot: {str(e)}\n"
-                      f"{traceback.format_exc(limit=3)}")
-        _notifier.error(f"there was an error with trading-bot: {str(e)}\n"
-                        f"{traceback.format_exc(limit=3)}")
+        _logger.error(f"Trading error: {e}\n{traceback.format_exc()}")
+        _notifier.error(f"Trading error: {e}\n{traceback.format_exc()}")
         sys.exit(1)
 
 
