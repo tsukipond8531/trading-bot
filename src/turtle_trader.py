@@ -381,9 +381,10 @@ class TurtleTrader:
         _logger.info(f"Amount after precision rounding: {amount}")
 
         cost = self.curr_market_conditions.C * amount
-        if cost < self._exchange.min_cost:
+        if cost < self._exchange.min_cost or cost > free_balance:
             _logger.warning(f"Cost {cost} is lower than "
                             f"min cost {self._exchange.min_cost} "
+                            f"or higher than free_balance {free_balance}"
                             f"SKIPPING ticker")
             return
 
