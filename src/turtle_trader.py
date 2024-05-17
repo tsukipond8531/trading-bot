@@ -372,13 +372,20 @@ class TurtleTrader:
         self._exchange.fetch_balance()
         free_balance = self._exchange.free_balance
         total_balance = self._exchange.total_balance
-
         free_balance = self.recalc_limited_free_entry_balance(free_balance, total_balance)
 
         trade_risk_cap = free_balance * TRADE_RISK_ALLOCATION
         amount = trade_risk_cap / (STOP_LOSS_ATR_MULTIPL * self.curr_market_conditions.ATR)
         _logger.info(f"Amount before rounding: {amount}")
         amount = get_adjusted_amount(amount, self._exchange.amount_precision)
+        _logger.info(f"Amount after precision rounding: {amount}")
+
+        cost = self.curr_market_conditions.C * amount
+        if cost < self._exchange.min_cost:
+            _logger.warning(f"Cost {cost} is lower than "
+                            f"min cost {self._exchange.min_cost} "
+                            f"SKIPPING ticker")
+            return
 
         _logger.info(f'Creating {action} order. '
                      f'Adjusted Amount with Precision {self._exchange.amount_precision}: {amount}')

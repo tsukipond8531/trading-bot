@@ -59,6 +59,10 @@ class ExchangeAdapter(ExchangeFactory):
         return self.market_info['limits']['amount']['min']
 
     @property
+    def min_cost(self):
+        return self.market_info['limits']['cost']['min']
+
+    @property
     def free_balance(self):
         if not self.balance:
             self.fetch_balance()
@@ -179,7 +183,7 @@ class ExchangeAdapter(ExchangeFactory):
                 params=self.params
             )
 
-            _notifier.info(f"order {str.upper(side)} | amount: {amount}")
+            _notifier.info(f"{str.upper(side)} {self.market} | amount: {amount}")
             return order
 
         except (ccxt.NetworkError, ccxt.ExchangeError) as e:
