@@ -39,7 +39,7 @@ def trade():
             _logger.info(f"\n\n----------- Starting trade - {ticker} -----------")
             exchange.market = f"{ticker}"
             trader = TurtleTrader(exchange)
-            _logger.info(f"Market info before trading: {exchange.market_info}")
+            _logger.debug(f"Market info before trading: {exchange.market_info}")
             trader.trade()
     except Exception as e:
         _logger.error(f"Trading error: {e}\n{traceback.format_exc()}")
